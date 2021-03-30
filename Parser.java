@@ -36,3 +36,59 @@ abstract class funDefList extends fieldVarList{
 class funDef extends funDefList{
 	
 }
+class header extends funDef{
+	
+}
+class funName extends header{
+	String id;
+}
+//parameter
+abstract class parameterList extends header{
+	
+}
+class parameter extends parameterList{
+	
+}
+class exp extends funDef{
+	
+}
+class funExp extends exp{
+	
+}
+class funCall extends funExp{
+	
+}
+//expresion 
+abstract class expList extends funCall{
+	
+}
+class binaryExp extends funExp{
+	
+}
+class arithExp extends binaryExp{
+	
+}
+class boolExp extends binaryExp{
+	
+}
+class compExp extends binaryExp{
+	
+}
+class dotExp extends binaryExp{
+	
+}
+class cond extends funExp{
+	
+}
+class not extends funExp{
+	
+}
+class arithOp extends arithExp{
+	
+}
+class boolOp extends boolExp{
+	
+}
+class compOp extends compExp{
+	
+}
