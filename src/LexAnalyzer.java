@@ -88,6 +88,10 @@ public class LexAnalyzer{
 		token identity = new token();
 		//reading first character
 		identity.characterNum = br.read();
+		//end of file
+		if(identity.characterNum == -1){
+			return "-1|EOF";
+		}
 		//reads the characters in until finished
 		while(true){
 			identity.word = "";
@@ -154,7 +158,6 @@ public class LexAnalyzer{
 				return Character.toString((char)identity.characterNum) + "|" + identity.iden;
 			}
 		}
-		return "";
 	}
 }
 class token{
