@@ -75,7 +75,7 @@ public class Parser{
 								int parenCount = 1;
 								token = LexAnalyzer.getToken(br);
 								token_split = token.split("|");
-								//header
+								//header open paren
 								if(token_split[0] == "("){
 									parenCount++;
 									token = LexAnalyzer.getToken(br);
@@ -122,37 +122,55 @@ public class Parser{
 										id must be checked against existing id for function, use params LL
 										**/
 										token = LexAnalyzer.getToken(br);
-										token_split = token.split("|");
+										token_split = token.split("|");									
 										//check catagories for expression
-										while(parenCount != 0){
-											switch(token_split[1]){
-												case "id":
-													if(params.contains(token_split[0])){
-														
-													}
-													else{
-														//error, keyword not defined in function doesnt crash just alerts
-													}
-												break;
-												case "int":
-												break;
-												case "float":
-												break;
-												case "floatE":
-												break;
-												case "keyword_null":
-												break;
-												case "keyword_this":
-												break;
-												case "RParen":
-													//function expression start
-												break;
-												case "LParen":
-													parenCount--;
-												break;
-												default:
-												//error
-											}
+										switch(token_split[1]){
+											case "id":
+												if(params.contains(token_split[0])){
+													funcdef.fundef.expression.id = token_split[0];
+												}
+												else{
+													//error, keyword not defined in function doesnt exit just alerts
+													System.out.println(token_split[0] + " Error, variable " + token_split[0] + " in " + parseStart.classdef.classname.id + "." + funcdef.fundef.head.funname.id + " is not declared");
+												}
+											break;
+											case "int":
+												funcdef.fundef.expression.integer = Integer.parseInt(token_split[0]);
+											break;
+											case "float":
+												funcdef.fundef.expression.decimal = Double.parseDouble(token_split[0]);
+											break;
+											case "floatE":
+												funcdef.fundef.expression.decimal = Double.parseDouble(token_split[0]);
+											break;
+											case "keyword_null":
+												funcdef.fundef.expression.keyword = Double.parseDouble(token_split[0]);
+											break;
+											case "keyword_this":
+												funcdef.fundef.expression.keyword = Double.parseDouble(token_split[0]);
+											break;
+											case "RParen":
+												token = LexAnalyzer.getToken(br);
+												token_split = token.split("|");
+												parenCount++;
+												//begin parsing func exp
+												while(parenCount != 1){
+													
+												}
+											break;
+											case "LParen":
+												parenCount--;
+											break;
+											default:
+												System.out.println(token_split[0] + " Syntax Error, expected function expression");
+												return;
+										}
+										token = LexAnalyzer.getToken(br);
+										token_split = token.split("|");
+										if(token_split[0] != ")"){
+											//error function should have ended but didnt
+											System.out.println(token_split[0] + " Syntax Error, expected function end");
+											return;
 										}
 									}
 									else{
@@ -278,7 +296,8 @@ class parameter extends multiParameterList{
 class exp extends funDef{
 	String id;
 	int integer;
-	float decimal;
+	double decimal;
+	String keyword;
 	funExp funexp;
 }
 class funExp extends exp{
