@@ -1,0 +1,7 @@
+How to compile
+javac src/*.java -d bin
+
+How to run
+java -cp bin Parser u1.txt output.txt
+
+The first input is the input file, the second is the output file name
