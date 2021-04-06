@@ -1,0 +1,29 @@
+class C1
+{
+	x1
+	x2
+	x3
+
+	((f1)   5)
+	((f2 x) x)
+	((f3 x) 5)
+	((f4 x) 5.5)
+	((f5 x) null)
+	((f6 x) this)
+	((f7 x y z) (g x y z))
+	((f8 x y) (+ x y))
+	((f9 x y) (- x y))
+	((f10 x y) (* x y))
+	((f11 x y) (/ x y))
+	((f12 x y) (| x y))
+	((f13 x y) (& x y))
+	((f14 x y) (< x y))
+	((f15 x y) (<= x y))
+	((f16 x y) (> x y))
+	((f17 x y) (>= x y))
+	((f18 x y) (= x y))
+	((f19 x y) (. x y))
+	((f20 x y) (if (= x y) (+ x y) (- x y)))
+	((f21 x) (! x))
+}
+

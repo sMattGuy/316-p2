@@ -1,0 +1,23 @@
+class Pair
+{
+	first
+	second
+}
+
+class List
+{
+	data
+	tailList
+}
+
+class BinTree
+{
+	data
+	leftSubtree
+	rightSubTree
+}
+
+Class A
+{
+}
+
