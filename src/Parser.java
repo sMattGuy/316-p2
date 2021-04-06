@@ -150,7 +150,7 @@ public class Parser{
 										funcdef.fundef.expression = new exp();
 										exp expressions = funcdef.fundef.expression;
 										//recursive function call
-										parseExpression(token, token_split, expressions, br, params);
+										parseExpression(token, token_split, expressions, br, params, parseStart.classInfo.fields);
 										//check next character
 										token = LexAnalyzer.getToken(br);
 										token_split = token.split(" ");
@@ -247,15 +247,16 @@ public class Parser{
 	
 	
 	//recursive function for solving the expressions
-	static void parseExpression(String token, String[] token_split, exp expression, BufferedReader br, LinkedList params) throws IOException{
+	static void parseExpression(String token, String[] token_split, exp expression, BufferedReader br, LinkedList params, LinkedList fields) throws IOException{
 		System.out.println("Parsing Token: " + token);
 		if(token_split[1].equals("id")){
-			if(params.contains(token_split[0])){
+			if(params.contains(token_split[0]) || fields.contains(token_split[0])){
 				expression.id = token_split[0];
 			}
 			else{
 				System.setOut(o);
 				System.out.println(token_split[0] + " Error, variable not delcared in scope");
+				System.setOut(console);
 			}
 			return;
 		}
@@ -272,11 +273,12 @@ public class Parser{
 			return;
 		}
 		else if(token_split[0].equals("(")){
-			System.out.println("Parsing function expression");
+			System.out.println("Parsing function expression: " + token);
 			//start of fun exp
 			while(!token_split[0].equals(")")){
 				token = LexAnalyzer.getToken(br);
 				token_split = token.split(" ");
+				System.out.println("Function expression internals: " + token);
 				//fun call
 				if(token_split[1].equals("id")){
 					//fun name
@@ -289,7 +291,19 @@ public class Parser{
 					//fun call exp list
 					expression.funexp.funcall.multiexplist = new multiExpList();
 					expression.funexp.funcall.multiexplist.expression = new exp();
-					parseExpression(token,token_split,expression.funexp.funcall.multiexplist.expression,br,params);
+					multiExpList workingExp = expression.funexp.funcall.multiexplist;
+					//while internal function is not complete
+					while(!token_split[0].equals(")")){
+						parseExpression(token,token_split,workingExp.expression,br,params,fields);
+						workingExp.multiexplist = new multiExpList();
+						workingExp = workingExp.multiexplist;
+						workingExp.expression = new exp();
+						//next internal token
+						token = LexAnalyzer.getToken(br);
+						token_split = token.split(" ");
+						System.out.println("Next internal token: " + token);
+					}
+					System.out.println("Function expression complete");
 				}
 				//bin exp -> arith
 				else if(token_split[1].equals("add") || token_split[1].equals("sub") || token_split[1].equals("mul") || token_split[1].equals("div")){
@@ -302,11 +316,11 @@ public class Parser{
 					token = LexAnalyzer.getToken(br);
 					token_split = token.split(" ");
 					expression.funexp.binexp.arithexp.exp1 = new exp();
-					parseExpression(token,token_split,expression.funexp.binexp.arithexp.exp1,br,params);
+					parseExpression(token,token_split,expression.funexp.binexp.arithexp.exp1,br,params,fields);
 					token = LexAnalyzer.getToken(br);
 					token_split = token.split(" ");
 					expression.funexp.binexp.arithexp.exp2 = new exp();
-					parseExpression(token,token_split,expression.funexp.binexp.arithexp.exp2,br,params);
+					parseExpression(token,token_split,expression.funexp.binexp.arithexp.exp2,br,params,fields);
 				}
 				//bin exp -> bool
 				else if(token_split[1].equals("or") || token_split[1].equals("and")){
@@ -319,11 +333,11 @@ public class Parser{
 					token = LexAnalyzer.getToken(br);
 					token_split = token.split(" ");
 					expression.funexp.binexp.boolexp.exp1 = new exp();
-					parseExpression(token,token_split,expression.funexp.binexp.boolexp.exp1,br,params);
+					parseExpression(token,token_split,expression.funexp.binexp.boolexp.exp1,br,params,fields);
 					token = LexAnalyzer.getToken(br);
 					token_split = token.split(" ");
 					expression.funexp.binexp.boolexp.exp2 = new exp();
-					parseExpression(token,token_split,expression.funexp.binexp.boolexp.exp2,br,params);
+					parseExpression(token,token_split,expression.funexp.binexp.boolexp.exp2,br,params,fields);
 				}
 				//bin exp -> comp
 				else if(token_split[1].equals("gt") || token_split[1].equals("ge") || token_split[1].equals("lt") || token_split[1].equals("le") || token_split[1].equals("eq")){
@@ -336,11 +350,11 @@ public class Parser{
 					token = LexAnalyzer.getToken(br);
 					token_split = token.split(" ");
 					expression.funexp.binexp.compexp.exp1 = new exp();
-					parseExpression(token,token_split,expression.funexp.binexp.compexp.exp1,br,params);
+					parseExpression(token,token_split,expression.funexp.binexp.compexp.exp1,br,params,fields);
 					token = LexAnalyzer.getToken(br);
 					token_split = token.split(" ");
 					expression.funexp.binexp.compexp.exp2 = new exp();
-					parseExpression(token,token_split,expression.funexp.binexp.compexp.exp2,br,params);
+					parseExpression(token,token_split,expression.funexp.binexp.compexp.exp2,br,params,fields);
 				}
 				//bin exp -> dot
 				else if(token_split[1].equals("dotOp")){
@@ -350,11 +364,11 @@ public class Parser{
 					token = LexAnalyzer.getToken(br);
 					token_split = token.split(" ");
 					expression.funexp.binexp.dotexp.exp1 = new exp();
-					parseExpression(token,token_split,expression.funexp.binexp.dotexp.exp1,br,params);
+					parseExpression(token,token_split,expression.funexp.binexp.dotexp.exp1,br,params,fields);
 					token = LexAnalyzer.getToken(br);
 					token_split = token.split(" ");
 					expression.funexp.binexp.dotexp.exp2 = new exp();
-					parseExpression(token,token_split,expression.funexp.binexp.dotexp.exp2,br,params);
+					parseExpression(token,token_split,expression.funexp.binexp.dotexp.exp2,br,params,fields);
 				}
 				//cond
 				else if(token_split[1].equals("keyword_if")){
@@ -363,15 +377,15 @@ public class Parser{
 					token = LexAnalyzer.getToken(br);
 					token_split = token.split(" ");
 					expression.funexp.condition.exp1 = new exp();
-					parseExpression(token,token_split,expression.funexp.condition.exp1,br,params);
+					parseExpression(token,token_split,expression.funexp.condition.exp1,br,params,fields);
 					token = LexAnalyzer.getToken(br);
 					token_split = token.split(" ");
 					expression.funexp.condition.exp2 = new exp();
-					parseExpression(token,token_split,expression.funexp.condition.exp2,br,params);
+					parseExpression(token,token_split,expression.funexp.condition.exp2,br,params,fields);
 					token = LexAnalyzer.getToken(br);
 					token_split = token.split(" ");
 					expression.funexp.condition.exp3 = new exp();
-					parseExpression(token,token_split,expression.funexp.condition.exp3,br,params);
+					parseExpression(token,token_split,expression.funexp.condition.exp3,br,params,fields);
 				}
 				//not
 				else if(token_split[1].equals("not")){
@@ -380,7 +394,7 @@ public class Parser{
 					token = LexAnalyzer.getToken(br);
 					token_split = token.split(" ");
 					expression.funexp.notType.exp1 = new exp();
-					parseExpression(token,token_split,expression.funexp.notType.exp1,br,params);
+					parseExpression(token,token_split,expression.funexp.notType.exp1,br,params,fields);
 				}
 				else if(token_split[0].equals(")")){
 					continue;
