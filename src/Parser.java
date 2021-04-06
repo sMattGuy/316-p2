@@ -3,6 +3,8 @@ import java.util.LinkedList;
 import java.util.HashMap;
 
 public class Parser{
+	static PrintStream o;
+	static PrintStream console;
 	public static void main(String[] args) throws IOException, FileNotFoundException{
 		//error if arguments arent 1
 		if(args.length != 2){
@@ -13,9 +15,9 @@ public class Parser{
 		File file = new File(args[0]);
 		BufferedReader br = new BufferedReader(new FileReader(file));
 		//creations of file output
-		PrintStream o = new PrintStream(new File(args[1]));
-		PrintStream console = System.out;
-		System.setOut(o);
+		o = new PrintStream(new File(args[1]));
+		console = System.out;
+		//System.setOut(o);
 		//parse tree classes
 		multipleClassDef completeParse = new multipleClassDef();
 		completeParse.classInfo = new ClassDefEntry();
@@ -23,228 +25,396 @@ public class Parser{
 		multipleClassDef parseStart = completeParse;
 		//begin parse
 		String token = LexAnalyzer.getToken(br);
-		System.out.println(token);
-		String[] token_split = token.split("|");
-		while(token_split[1] != "EOF"){
-			if(token_split[0] == "class"){
+		String[] token_split = token.split(" ");
+		while(true){
+			if(token_split[1].equals("EOF")){
+				break;
+			}
+			if(token_split[0].equals("class")){
+				System.out.println("class found");
 				//begin next step of parse
 				token = LexAnalyzer.getToken(br);
-				token_split = token.split("|");
-				if(token_split[1] == "id"){
+				token_split = token.split(" ");
+				if(token_split[1].equals("id")){
+					System.out.println("Class Name Found");
+					parseStart.classdef = new classDef();
+					parseStart.classdef.classname = new className();
 					parseStart.classdef.classname.id = token_split[0];
+					parseStart.classInfo.className = token_split[0];
 					//parse if either superclass or if start of inside;
 					token = LexAnalyzer.getToken(br);
-					token_split = token.split("|");
+					token_split = token.split(" ");
 					//super class
-					if(token_split[0] == ":"){
+					if(token_split[0].equals(":")){
+						System.out.println("Super Class Found");
 						token = LexAnalyzer.getToken(br);
-						token_split = token.split("|");
-						if(token_split[1] == "id"){
+						token_split = token.split(" ");
+						if(token_split[1].equals("id")){
+							System.out.println("Super Class Name Found");
 							//continue program
+							parseStart.classdef.superClassName = new className();
 							parseStart.classdef.superClassName.id = token_split[0];
-							classInfo.superClassName = token_split[0];
+							parseStart.classInfo.superClassName = token_split[0];
 							token = LexAnalyzer.getToken(br);
-							token_split = token.split("|");
+							token_split = token.split(" ");
 						}
 						else{
+							System.setOut(o);
 							System.out.println(token_split[0] + " Syntax Error, class identifier name expected");
 							return;
 						}
 					}
 					//open bracket
-					if(token_split[0] == "{"){
+					if(token_split[0].equals("{")){
+						System.out.println("Open Bracket Found");
 						token = LexAnalyzer.getToken(br);
-						token_split = token.split("|");
+						token_split = token.split(" ");
+						parseStart.classdef.classbody = new classBody();
+						parseStart.classdef.classbody.multifieldvarlist = new multiFieldVarList();
 						multiFieldVarList fields = parseStart.classdef.classbody.multifieldvarlist;
-						while(token_split[1] == "id"){
+						while(token_split[1].equals("id")){
+							System.out.println("Field Variable Found");
 							//add token to external structure and parse tree
-							classInfo.fields.add(token_split[0]);
+							parseStart.classInfo.fields.add(token_split[0]);
+							fields.fieldvar = new fieldVar();
 							fields.fieldvar.id = token_split[0];
 							//begin recursive call
+							fields.multifieldvarlist = new multiFieldVarList();
 							fields = fields.multifieldvarlist;
 							token = LexAnalyzer.getToken(br);
-							token_split = token.split("|");
+							token_split = token.split(" ");
 						}
 						//end of multi recursive, make null
 						fields = null;
 						//begin function definitions
+						parseStart.classdef.classbody.multifundeflist = new multiFunDefList();
 						multiFunDefList funcdef = parseStart.classdef.classbody.multifundeflist;
-						while(token_split[0] == "("){
+						while(token_split[0].equals("(")){
+							System.out.println("Open Paren. Found");
 							//individual function parser
-							if(token_split[0] == "("){
+							if(token_split[0].equals("(")){
 								int parenCount = 1;
 								token = LexAnalyzer.getToken(br);
-								token_split = token.split("|");
+								token_split = token.split(" ");
 								//header open paren
-								if(token_split[0] == "("){
+								if(token_split[0].equals("(")){
 									parenCount++;
 									token = LexAnalyzer.getToken(br);
-									token_split = token.split("|");
+									token_split = token.split(" ");
 									//fun name gotten
-									if(token_split[1] == "id"){
+									if(token_split[1].equals("id")){
+										System.out.println("Function Name Found " + token);
 										//LL for params
 										LinkedList<String> params = new LinkedList<String>();
+										funcdef.fundef = new funDef();
+										funcdef.fundef.head = new header();
+										funcdef.fundef.head.funname = new funName();
 										funcdef.fundef.head.funname.id = token_split[0];
 										//get params
 										token = LexAnalyzer.getToken(br);
-										token_split = token.split("|");
+										token_split = token.split(" ");
 										//set up recursive for param list
-										multiParameterList paramsList = funcdef.fundef.head.multiparamlist
-										while(token_split[0] != ")"){
-											if(token_split[1] == "id"){
+										funcdef.fundef.head.multiparamlist = new multiParameterList();
+										multiParameterList paramsList = funcdef.fundef.head.multiparamlist;
+										while(!token_split[0].equals(")")){
+											if(token_split[1].equals("id")){
+												System.out.println("Function Parameter Found " + token);
 												//add param to tree and LL
+												paramsList.param = new parameter();
 												paramsList.param.id = token_split[0];
 												params.add(token_split[0]);
 												//recursive param list
+												paramsList.multiparamlist = new multiParameterList();
 												paramsList = paramsList.multiparamlist;
 												//next token
 												token = LexAnalyzer.getToken(br);
-												token_split = token.split("|");
+												token_split = token.split(" ");
 											}
 											else{
 												//error on param name
-												System.out.println(token_split[0] + " Syntax Error, expected parameter id");
+												System.setOut(o);
+												System.out.println(token_split[0] + " Syntax Error, expected parameter");
 												return;
 											}
 										}
+										token = LexAnalyzer.getToken(br);
+										token_split = token.split(" ");
 										//subtrack param
 										parenCount--;
 										//terminate params
 										paramsList = null;
 										//add func def to hashmap
-										classInfo.funMap.put(funcdef.fundef.header.funname.id, params);
+										parseStart.classInfo.funMap.put(funcdef.fundef.head.funname.id, params);
 										//parse expressions
-										/**
-										note to me:
-										do the parse as follows,
-										can either be constant, id, keyword, or function expression
-										check in this order as it will be easier
-										id must be checked against existing id for function, use params LL
-										**/
+										//set up expression holder
+										funcdef.fundef.expression = new exp();
+										exp expressions = funcdef.fundef.expression;
+										//recursive function call
+										parseExpression(token, token_split, expressions, br, params);
+										//check next character
 										token = LexAnalyzer.getToken(br);
-										token_split = token.split("|");									
-										//check catagories for expression
-										switch(token_split[1]){
-											case "id":
-												if(params.contains(token_split[0])){
-													funcdef.fundef.expression.id = token_split[0];
-												}
-												else{
-													//error, keyword not defined in function doesnt exit just alerts
-													System.out.println(token_split[0] + " Error, variable " + token_split[0] + " in " + parseStart.classdef.classname.id + "." + funcdef.fundef.head.funname.id + " is not declared");
-												}
-											break;
-											case "int":
-												funcdef.fundef.expression.integer = Integer.parseInt(token_split[0]);
-											break;
-											case "float":
-												funcdef.fundef.expression.decimal = Double.parseDouble(token_split[0]);
-											break;
-											case "floatE":
-												funcdef.fundef.expression.decimal = Double.parseDouble(token_split[0]);
-											break;
-											case "keyword_null":
-												funcdef.fundef.expression.keyword = Double.parseDouble(token_split[0]);
-											break;
-											case "keyword_this":
-												funcdef.fundef.expression.keyword = Double.parseDouble(token_split[0]);
-											break;
-											case "RParen":
-												token = LexAnalyzer.getToken(br);
-												token_split = token.split("|");
-												parenCount++;
-												//begin parsing func exp
-												while(parenCount != 1){
-													
-												}
-											break;
-											case "LParen":
-												parenCount--;
-											break;
-											default:
-												System.out.println(token_split[0] + " Syntax Error, expected function expression");
+										token_split = token.split(" ");
+										if(token_split[0].equals(")")){
+											System.out.println("Function Completed");
+											//function is complete check if another function is present
+											token = LexAnalyzer.getToken(br);
+											token_split = token.split(" ");
+											if(token_split[0].equals("(")){
+												continue;
+											}
+											//end of class
+											else if(token_split[0].equals("}")){
+												funcdef = funcdef.multifundeflist;
+												break;
+											}
+											else{
+												//error expected end
+												System.setOut(o);
+												System.out.println(token_split[0] + " Syntax Error, expected another function / end of class");
 												return;
-										}
-										token = LexAnalyzer.getToken(br);
-										token_split = token.split("|");
-										if(token_split[0] != ")"){
-											//error function should have ended but didnt
-											System.out.println(token_split[0] + " Syntax Error, expected function end");
-											return;
+											}
 										}
 									}
 									else{
 										//error on func name
+										System.setOut(o);
 										System.out.println(token_split[0] + " Syntax Error, expected function name");
 										return;
 									}
 								}
 								else{
 									//error expected header start
+									System.setOut(o);
 									System.out.println(token_split[0] + " Syntax Error, expected function header");
 									return;
 								}
 							}
 							else{
 								//error expected function start
+								System.setOut(o);
+								System.out.println(token_split[0] + " Syntax Error, expected function start");
+								return;
 							}
+							funcdef = funcdef.multifundeflist;
 						}
 						funcdef = null;
 						//if no functions or functions ended
-						if(token_split[0] == "}"){
-							
+						if(token_split[0].equals("}")){
+							token = LexAnalyzer.getToken(br);
+							token_split = token.split(" ");
 						}
 						//error something other than function start or end of class
 						else{
-							System.out.println(token_split[0] + " Syntax Error, " + "}"  + "expected");
+							System.setOut(o);
+							System.out.println(token_split[0] + " Syntax Error, " + "}"  + " expected");
 							return;
 						}
 					}
 					//error
 					else{
+						System.setOut(o);
 						System.out.println(token_split[0] + " Syntax Error, " + "{" + "expected");
 						return;
 					}
 				}
 				else{
 					//error if id not specified
+					System.setOut(o);
 					System.out.println(token_split[0] + " Syntax Error, class identifier name expected");
 					return;
 				}
 			}
 			else{
 				//error
+				System.setOut(o);
 				System.out.println(token_split[0] + " : Syntax Error, unexpected symbol where " + "class" + " expected");
 				return;
 			}
+			parseStart.multiclassdef = new multipleClassDef();
 			parseStart = parseStart.multiclassdef;
+			parseStart.classInfo = new ClassDefEntry();
 		}
 		parseStart = null;
+		//finale
+		System.setOut(o);
+		System.out.println("Class names and their field variables, function names, parameters are displayed below.\n");
 		while(completeParse.multiclassdef != null){
 			System.out.println(completeParse.classInfo);
+			completeParse = completeParse.multiclassdef;
+			System.out.println();
+		}
+	}
+	
+	
+	//recursive function for solving the expressions
+	static void parseExpression(String token, String[] token_split, exp expression, BufferedReader br, LinkedList params) throws IOException{
+		System.out.println("Parsing Token: " + token);
+		if(token_split[1].equals("id")){
+			if(params.contains(token_split[0])){
+				expression.id = token_split[0];
+			}
+			else{
+				System.setOut(o);
+				System.out.println(token_split[0] + " Error, variable not delcared in scope");
+			}
+			return;
+		}
+		else if(token_split[1].equals("int")){
+			expression.integer = token_split[0];
+			return;
+		}
+		else if(token_split[1].equals("float") || token_split[1].equals("floatE")){
+			expression.decimal = token_split[0];
+			return;
+		}
+		else if(token_split[1].equals("keyword_null") || token_split[1].equals("keyword_this")){
+			expression.keyword = token_split[0];
+			return;
+		}
+		else if(token_split[0].equals("(")){
+			System.out.println("Parsing function expression");
+			//start of fun exp
+			while(!token_split[0].equals(")")){
+				token = LexAnalyzer.getToken(br);
+				token_split = token.split(" ");
+				//fun call
+				if(token_split[1].equals("id")){
+					//fun name
+					expression.funexp = new funExp();
+					expression.funexp.funcall = new funCall();
+					expression.funexp.funcall.funname = new funName();
+					expression.funexp.funcall.funname.id = token_split[0];
+					token = LexAnalyzer.getToken(br);
+					token_split = token.split(" ");
+					//fun call exp list
+					expression.funexp.funcall.multiexplist = new multiExpList();
+					expression.funexp.funcall.multiexplist.expression = new exp();
+					parseExpression(token,token_split,expression.funexp.funcall.multiexplist.expression,br,params);
+				}
+				//bin exp -> arith
+				else if(token_split[1].equals("add") || token_split[1].equals("sub") || token_split[1].equals("mul") || token_split[1].equals("div")){
+					//bin exp -> arith -> arith op
+					expression.funexp = new funExp();
+					expression.funexp.binexp = new binaryExp();
+					expression.funexp.binexp.arithexp = new arithExp();
+					expression.funexp.binexp.arithexp.arithop = new arithOp();
+					expression.funexp.binexp.arithexp.arithop.operator = token_split[0];
+					token = LexAnalyzer.getToken(br);
+					token_split = token.split(" ");
+					expression.funexp.binexp.arithexp.exp1 = new exp();
+					parseExpression(token,token_split,expression.funexp.binexp.arithexp.exp1,br,params);
+					token = LexAnalyzer.getToken(br);
+					token_split = token.split(" ");
+					expression.funexp.binexp.arithexp.exp2 = new exp();
+					parseExpression(token,token_split,expression.funexp.binexp.arithexp.exp2,br,params);
+				}
+				//bin exp -> bool
+				else if(token_split[1].equals("or") || token_split[1].equals("and")){
+					//bin exp -> bool -> bool op
+					expression.funexp = new funExp();
+					expression.funexp.binexp = new binaryExp();
+					expression.funexp.binexp.boolexp = new boolExp();
+					expression.funexp.binexp.boolexp.boolop = new boolOp();
+					expression.funexp.binexp.boolexp.boolop.operator = token_split[0];
+					token = LexAnalyzer.getToken(br);
+					token_split = token.split(" ");
+					expression.funexp.binexp.boolexp.exp1 = new exp();
+					parseExpression(token,token_split,expression.funexp.binexp.boolexp.exp1,br,params);
+					token = LexAnalyzer.getToken(br);
+					token_split = token.split(" ");
+					expression.funexp.binexp.boolexp.exp2 = new exp();
+					parseExpression(token,token_split,expression.funexp.binexp.boolexp.exp2,br,params);
+				}
+				//bin exp -> comp
+				else if(token_split[1].equals("gt") || token_split[1].equals("ge") || token_split[1].equals("lt") || token_split[1].equals("le") || token_split[1].equals("eq")){
+					//bin exp -> comp -> comp op
+					expression.funexp = new funExp();
+					expression.funexp.binexp = new binaryExp();
+					expression.funexp.binexp.compexp = new compExp();
+					expression.funexp.binexp.compexp.compop = new compOp();
+					expression.funexp.binexp.compexp.compop.operator = token_split[0];
+					token = LexAnalyzer.getToken(br);
+					token_split = token.split(" ");
+					expression.funexp.binexp.compexp.exp1 = new exp();
+					parseExpression(token,token_split,expression.funexp.binexp.compexp.exp1,br,params);
+					token = LexAnalyzer.getToken(br);
+					token_split = token.split(" ");
+					expression.funexp.binexp.compexp.exp2 = new exp();
+					parseExpression(token,token_split,expression.funexp.binexp.compexp.exp2,br,params);
+				}
+				//bin exp -> dot
+				else if(token_split[1].equals("dotOp")){
+					expression.funexp = new funExp();
+					expression.funexp.binexp = new binaryExp();
+					expression.funexp.binexp.dotexp = new dotExp();
+					token = LexAnalyzer.getToken(br);
+					token_split = token.split(" ");
+					expression.funexp.binexp.dotexp.exp1 = new exp();
+					parseExpression(token,token_split,expression.funexp.binexp.dotexp.exp1,br,params);
+					token = LexAnalyzer.getToken(br);
+					token_split = token.split(" ");
+					expression.funexp.binexp.dotexp.exp2 = new exp();
+					parseExpression(token,token_split,expression.funexp.binexp.dotexp.exp2,br,params);
+				}
+				//cond
+				else if(token_split[1].equals("keyword_if")){
+					expression.funexp = new funExp();
+					expression.funexp.condition = new cond();
+					token = LexAnalyzer.getToken(br);
+					token_split = token.split(" ");
+					expression.funexp.condition.exp1 = new exp();
+					parseExpression(token,token_split,expression.funexp.condition.exp1,br,params);
+					token = LexAnalyzer.getToken(br);
+					token_split = token.split(" ");
+					expression.funexp.condition.exp2 = new exp();
+					parseExpression(token,token_split,expression.funexp.condition.exp2,br,params);
+					token = LexAnalyzer.getToken(br);
+					token_split = token.split(" ");
+					expression.funexp.condition.exp3 = new exp();
+					parseExpression(token,token_split,expression.funexp.condition.exp3,br,params);
+				}
+				//not
+				else if(token_split[1].equals("not")){
+					expression.funexp = new funExp();
+					expression.funexp.notType = new not();
+					token = LexAnalyzer.getToken(br);
+					token_split = token.split(" ");
+					expression.funexp.notType.exp1 = new exp();
+					parseExpression(token,token_split,expression.funexp.notType.exp1,br,params);
+				}
+				else if(token_split[0].equals(")")){
+					continue;
+				}
+				else{
+					System.setOut(o);
+					System.out.println(token_split[0] + " Syntax Error, token not valid in any context of function expression");
+					System.exit(0);
+				}
+			}
 		}
 	}
 }
 
 //class definitions
 //information class
-class ClassDefEntry // symbol table entry for a single ⟨class def⟩
+class ClassDefEntry extends multipleClassDef// symbol table entry for a single ⟨class def⟩
 {
-	String superClassName; // value is "" if superclass is absent
+	String className = "";
+	String superClassName = ""; // value is "" if superclass is absent
 	LinkedList<String> fields = new LinkedList<String>();
 	HashMap<String, LinkedList<String>> funMap = new HashMap<String, LinkedList<String>>();
 		// function names mapped to their parameters
 
 	public String toString()
 	{
-		return "\nsuperclass=" + superClassName + "\nfields=" + fields.toString() + "\nfunctions=" + funMap.toString();
+		return className + "=\nsuperclass=" + superClassName + "\nfields=" + fields.toString() + "\nfunctions=" + funMap.toString();
 	}
 }
 //parse classes
 class multipleClassDef{
 	classDef classdef;
 	multipleClassDef multiclassdef;
-	ClassDefEntry classInfo;
+	ClassDefEntry classInfo; 
 }
 class classDef extends multipleClassDef{
 	className classname;
@@ -295,8 +465,8 @@ class parameter extends multiParameterList{
 }
 class exp extends funDef{
 	String id;
-	int integer;
-	double decimal;
+	String integer;
+	String decimal;
 	String keyword;
 	funExp funexp;
 }
@@ -328,7 +498,7 @@ class arithExp extends binaryExp{
 	exp exp2;
 }
 class boolExp extends binaryExp{
-	boolOp bollop;
+	boolOp boolop;
 	exp exp1;
 	exp exp2;
 }

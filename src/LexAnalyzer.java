@@ -90,73 +90,72 @@ public class LexAnalyzer{
 		identity.characterNum = br.read();
 		//end of file
 		if(identity.characterNum == -1){
-			return "-1|EOF";
+			return "-1 EOF";
 		}
 		//reads the characters in until finished
-		while(true){
-			identity.word = "";
-			identity.iden = "";
-			//simple token solver
-			identity.identify();
-			//starts parsing multi step tokens if not a simple token
-			if(identity.iden.equals("advanced")){
-				//start of complex tokens, each calls a token helper function
-				//id
-				if((identity.characterNum >= 65 && identity.characterNum <= 90)||(identity.characterNum >= 97 && identity.characterNum <= 122)){
-					identity.id(br);
-					//System.out.println(identity.word + " : " + identity.iden);
-					return identity.word + "|" + identity.iden;
-				}
-				//int
-				else if(identity.characterNum >= 48 && identity.characterNum <= 57){
-					identity.integer(br);
-					//System.out.println(identity.word + " : " + identity.iden);
-					return identity.word + "|" + identity.iden;
-				}
-				//add
-				else if(identity.characterNum == 43){
-					identity.add(br);
-					//System.out.println(identity.word + " : " + identity.iden);
-					return identity.word + "|" + identity.iden;
-				}
-				//sub
-				else if(identity.characterNum == 45){
-					identity.sub(br);
-					//System.out.println(identity.word + " : " + identity.iden);
-					return identity.word + "|" + identity.iden;
-				}
-				//dot
-				else if(identity.characterNum == 46){
-					identity.dot(br);
-					//System.out.println(identity.word + " : " + identity.iden);
-					return identity.word + "|" + identity.iden;
-				}
-				//lt
-				else if(identity.characterNum == 60){
-					identity.lt(br);
-					//System.out.println(identity.word + " : " + identity.iden);
-					return identity.word + "|" + identity.iden;
-				}
-				//gt
-				else if(identity.characterNum == 62){
-					identity.gt(br);
-					//System.out.println(identity.word + " : " + identity.iden);
-					return identity.word + "|" + identity.iden;
-				}
-				//control chars
-				else if(identity.characterNum >= 0 && identity.characterNum <= 32){
-					br.read();
-				}
-				//invalid token
-				else{
-					System.out.println((char)identity.characterNum + "\t:\tLexical Error, Invalid Token");
-				}
+		identity.word = "";
+		identity.iden = "";
+		//simple token solver
+		identity.identify();
+		//starts parsing multi step tokens if not a simple token
+		if(identity.iden.equals("advanced")){
+			//start of complex tokens, each calls a token helper function
+			//id
+			if((identity.characterNum >= 65 && identity.characterNum <= 90)||(identity.characterNum >= 97 && identity.characterNum <= 122)){
+				identity.id(br);
+				//System.out.println(identity.word + " : " + identity.iden);
+				return identity.word + " " + identity.iden;
 			}
-			//output if single character
+			//int
+			else if(identity.characterNum >= 48 && identity.characterNum <= 57){
+				identity.integer(br);
+				//System.out.println(identity.word + " : " + identity.iden);
+				return identity.word + " " + identity.iden;
+			}
+			//add
+			else if(identity.characterNum == 43){
+				identity.add(br);
+				//System.out.println(identity.word + " : " + identity.iden);
+				return identity.word + " " + identity.iden;
+			}
+			//sub
+			else if(identity.characterNum == 45){
+				identity.sub(br);
+				//System.out.println(identity.word + " : " + identity.iden);
+				return identity.word + " " + identity.iden;
+			}
+			//dot
+			else if(identity.characterNum == 46){
+				identity.dot(br);
+				//System.out.println(identity.word + " : " + identity.iden);
+				return identity.word + " " + identity.iden;
+			}
+			//lt
+			else if(identity.characterNum == 60){
+				identity.lt(br);
+				//System.out.println(identity.word + " : " + identity.iden);
+				return identity.word + " " + identity.iden;
+			}
+			//gt
+			else if(identity.characterNum == 62){
+				identity.gt(br);
+				//System.out.println(identity.word + " : " + identity.iden);
+				return identity.word + " " + identity.iden;
+			}
+			//control chars
+			else if(identity.characterNum >= 0 && identity.characterNum <= 32){
+				return getToken(br);
+			}
+			//invalid token
 			else{
-				//System.out.println((char)identity.characterNum + "\t:\t" + identity.iden);
-				return Character.toString((char)identity.characterNum) + "|" + identity.iden;
+				System.out.println((char)identity.characterNum + "\t:\tLexical Error, Invalid Token");
+				return Character.toString((char)identity.characterNum) + " ERROR";
 			}
+		}
+		//output if single character
+		else{
+			//System.out.println((char)identity.characterNum + "\t:\t" + identity.iden);
+			return Character.toString((char)identity.characterNum) + " " + identity.iden;
 		}
 	}
 }
@@ -234,13 +233,15 @@ class token{
 		//sets identity
 		this.iden = "id";
 		//while character is a digit or a letter
-		while((this.characterNum >= 65 && this.characterNum <= 90)||(this.characterNum >= 97 && this.characterNum <= 122)||
-			  (this.characterNum >= 48 && this.characterNum <= 57)){
+		while((this.characterNum >= 65 && this.characterNum <= 90)||(this.characterNum >= 97 && this.characterNum <= 122)||(this.characterNum >= 48 && this.characterNum <= 57)){
 			//appends to full token name
 			this.word = this.word + Character.toString((char)this.characterNum);
+			//marks current position
+			br.mark(16);
 			//reads next character
 			this.characterNum = br.read();
 		}
+		br.reset();
 		//checks if current token is a keyword
 		if(this.keywordCheck()){
 			//if keyword, change identity
@@ -256,6 +257,7 @@ class token{
 		while(this.characterNum >= 48 && this.characterNum <= 57){
 			//append to token name and advance character
 			this.word = this.word + Character.toString((char)this.characterNum);
+			br.mark(16);
 			this.characterNum = br.read();
 		}
 		//if dot is next character
@@ -268,6 +270,7 @@ class token{
 			//call e function
 			this.e(br);
 		}
+		br.reset();
 		return;
 	}
 	//dot
@@ -277,12 +280,14 @@ class token{
 		//append to current token
 		this.word = this.word + Character.toString((char)this.characterNum);
 		//advance character
+		br.mark(16);
 		this.characterNum = br.read();
 		//if next char is a digit
 		if(this.characterNum >= 48 && this.characterNum <= 57){
 			//call float function
 			this.floatType(br);
 		}
+		br.reset();
 		return;
 	}
 	//add
@@ -292,6 +297,7 @@ class token{
 		//append to current token
 		this.word = this.word + Character.toString((char)this.characterNum);
 		//advance character
+		br.mark(16);
 		this.characterNum = br.read();
 		//if next char is a dot
 		if(this.characterNum == 46){
@@ -303,6 +309,7 @@ class token{
 			//call integer function
 			this.integer(br);
 		}
+		br.reset();
 		return;
 	}
 	//sub (exact same as add except for substitution 
@@ -310,6 +317,7 @@ class token{
 		//change identity
 		this.iden = "sub";
 		this.word = this.word + Character.toString((char)this.characterNum);
+		br.mark(16);
 		this.characterNum = br.read();
 		//dot
 		if(this.characterNum == 46){
@@ -319,6 +327,7 @@ class token{
 		else if(this.characterNum >= 48 && this.characterNum <= 57){
 			this.integer(br);
 		}
+		br.reset();
 		return;
 	}
 	//greater than
@@ -328,6 +337,7 @@ class token{
 		//append to token
 		this.word = this.word + Character.toString((char)this.characterNum);
 		//read next char
+		br.mark(16);
 		this.characterNum = br.read();
 		//if next char is equal sign
 		if(characterNum == 61){
@@ -336,20 +346,24 @@ class token{
 			//update identity to greater than or equal
 			this.iden = "ge";
 			//read next char
+			br.mark(16);
 			this.characterNum = br.read();
 		}
+		br.reset();
 		return;
 	}
 	//less than (exact same as greater then)
 	public void lt(BufferedReader br)throws IOException{
 		this.iden = "lt";
 		this.word = this.word + Character.toString((char)this.characterNum);
+		br.mark(16);
 		this.characterNum = br.read();
 		if(characterNum == 61){
 			this.word = this.word + Character.toString((char)this.characterNum);
 			this.iden = "le";
 			this.characterNum = br.read();
 		}
+		br.reset();
 		return;
 	}
 	//float
@@ -359,17 +373,20 @@ class token{
 		//if incoming dot
 		if(this.characterNum == 46){
 			this.word = this.word + Character.toString((char)this.characterNum);
+			br.mark(16);
 			this.characterNum = br.read();
 		}
 		//while character is a digit
 		while(this.characterNum >= 48 && this.characterNum <= 57){
 			this.word = this.word + Character.toString((char)this.characterNum);
+			br.mark(16);
 			this.characterNum = br.read();
 		}
 		//if character is an e or E
 		if(this.characterNum == 101 || this.characterNum == 69){
 			this.e(br);
 		}
+		br.reset();
 		return;
 	}
 	//floate
@@ -379,18 +396,22 @@ class token{
 		//while character is a digit
 		while(this.characterNum >= 48 && this.characterNum <= 57){
 			this.word = this.word + Character.toString((char)this.characterNum);
+			br.mark(16);
 			this.characterNum = br.read();
 		}
+		br.reset();
 		return;
 	}
 	//e and e + -
 	private void e(BufferedReader br)throws IOException{
 		//update token
 		this.word = this.word + Character.toString((char)this.characterNum);
+		br.mark(16);
 		this.characterNum = br.read();
 		//if character is + -
 		if(this.characterNum == 43 || this.characterNum == 45){
 			this.word = this.word + Character.toString((char)this.characterNum);
+			br.mark(16);
 			this.characterNum = br.read();
 			//if character is a digit
 			if(this.characterNum >= 48 && this.characterNum <= 57){
@@ -399,6 +420,7 @@ class token{
 			//error throw if not a digit
 			else{
 				this.iden = "Lexical Error, Invalid Token";
+				br.mark(16);
 				this.characterNum = br.read();
 			}
 		}
@@ -409,13 +431,16 @@ class token{
 		//error throw if not digit
 		else{
 			this.iden = "Lexical Error, Invalid Token";
+			br.mark(16);
 			this.characterNum = br.read();
 		}
+		br.reset();
 		return;
 	} 
 	//decimal point
 	private void decimalPoint(BufferedReader br)throws IOException{
 		this.word = this.word + Character.toString((char)this.characterNum);
+		br.mark(16);
 		this.characterNum = br.read();
 		//if character is a digit
 		if(this.characterNum >= 48 && this.characterNum <= 57){
@@ -425,8 +450,10 @@ class token{
 		else{
 			this.word = this.word + Character.toString((char)this.characterNum);
 			this.iden = "Lexical Error, Invalid Token";
+			br.mark(16);
 			this.characterNum = br.read();
 		}
+		br.reset();
 		return;
 	}
 }
